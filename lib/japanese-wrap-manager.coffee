@@ -140,29 +140,31 @@ class JapaneseWrapManager
     #    JapaneseWrapManager.characterClasses["Full stops"],
     #    JapaneseWrapManager.characterClasses["Commas"])
 
-  # overwrite Display#findWrapColumn()
-  overwriteFindWrapColumn: (displayBuffer) ->
-    unless displayBuffer.japaneseWrapManager?
-      displayBuffer.japaneseWrapManager = @
+  # overwrite TokenizedLine#findWrapColumn()
+  overwriteFindWrapColumn: (tokenizedLine) ->
+    proto = tokenizedLine.constructor::
 
-    unless displayBuffer.originalFindWrapColumn?
-      displayBuffer.originalFindWrapColumn = displayBuffer.findWrapColumn
+    unless proto.japaneseWrapManager?
+      proto.japaneseWrapManager = @
 
-    displayBuffer.findWrapColumn = (line, softWrapColumn=@getSoftWrapColumn()) ->
-      # console.log(line)
-      return unless @isSoftWrapped()
+    unless proto.originalFindWrapColumn?
+      proto.originalFindWrapColumn = proto.findWrapColumn
+
+    proto.findWrapColumn = (maxColumn) ->
       # If all characters are full width, the width is twice the length.
-      return unless (line.length * 2) > softWrapColumn
-      return @japaneseWrapManager.findJapaneseWrapColumn(line, softWrapColumn)
+      return unless (@text.length * 2) > maxColumn
+      return @japaneseWrapManager.findJapaneseWrapColumn(@text, maxColumn)
 
-  # restore Display#findWrapColumn()
-  restoreFindWrapColumn: (displayBuffer) ->
-    if displayBuffer.originalFindWrapColumn?
-      displayBuffer.findWrapColumn = displayBuffer.originalFindWrapColumn
-      displayBuffer.originalFindWrapColumn = undefined
+  # restore TokenizedLine#findWrapColumn()
+  restoreFindWrapColumn: (tokenizedLine) ->
+    proto = tokenizedLine.constructor::
 
-    if displayBuffer.japaneseWrapManager?
-      displayBuffer.japaneseWrapManager = undefined
+    if proto.originalFindWrapColumn?
+      proto.findWrapColumn = proto.originalFindWrapColumn
+      proto.originalFindWrapColumn = undefined
+
+    if proto.japaneseWrapManager?
+      proto.japaneseWrapManager = undefined
 
   # Japanese Wrap Column
   findJapaneseWrapColumn: (line, softWrapColumn) ->
